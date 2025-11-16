@@ -3,6 +3,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <limits.h>
+#include <string>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -38,18 +39,22 @@ int main(int argc, char* argv[]) {
     bool alreadyInstalled = vrApplications->IsApplicationInstalled(appKey);
     
     if (alreadyInstalled) {
-        char oldManifestPath[PATH_MAX];
-        vr::EVRApplicationError appErr = vrApplications->GetApplicationPropertyString(
-            appKey, vr::VRApplicationProperty_ManifestPath_String, 
-            oldManifestPath, PATH_MAX, &appErr);
+        char oldWorkingDir[PATH_MAX];
+        vr::EVRApplicationError appErr = vr::VRApplicationError_None;
+        uint32_t size = vrApplications->GetApplicationPropertyString(
+            appKey, vr::VRApplicationProperty_WorkingDirectory_String, 
+            oldWorkingDir, PATH_MAX, &appErr);
         
-        if (appErr == vr::VRApplicationError_None && strcmp(oldManifestPath, manifestPath) != 0) {
-            std::cout << "Removing old manifest: " << oldManifestPath << std::endl;
-            vrApplications->RemoveApplicationManifest(oldManifestPath);
-        } else if (appErr == vr::VRApplicationError_None) {
-            std::cout << "Overlay already registered with this manifest" << std::endl;
-            vr::VR_Shutdown();
-            return 0;
+        if (appErr == vr::VRApplicationError_None && size > 0) {
+            std::string oldManifestPath = std::string(oldWorkingDir) + "/manifest.vrmanifest";
+            if (oldManifestPath != manifestPath && access(oldManifestPath.c_str(), F_OK) == 0) {
+                std::cout << "Removing old manifest: " << oldManifestPath << std::endl;
+                vrApplications->RemoveApplicationManifest(oldManifestPath.c_str());
+            } else {
+                std::cout << "Overlay already registered" << std::endl;
+                vr::VR_Shutdown();
+                return 0;
+            }
         }
     }
     
