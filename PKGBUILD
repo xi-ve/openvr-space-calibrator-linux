@@ -2,7 +2,7 @@
 pkgname=openvr-space-calibrator-linux
 pkgver=1.5.1
 pkgrel=1
-pkgdesc="Linux port of OpenVR-SpaceCalibrator - synchronize multiple VR playspaces in SteamVR"
+pkgdesc="Linux port of OpenVR-SpaceCalibrator - synchronize multiple VR playspaces in SteamVR. Requires SteamVR to be installed (provides OpenVR headers)."
 arch=('x86_64')
 url="https://github.com/xi-ve/openvr-space-calibrator-linux"
 license=('MIT')
