@@ -101,7 +101,3 @@ To enable continuous calibration mode, first select your headset on the left col
 
 - **Original Project:** [OpenVR-SpaceCalibrator](https://github.com/hyblocker/OpenVR-SpaceCalibrator) by [@hyblocker](https://github.com/hyblocker)
 - **Linux Port:** [@xi-ve](https://github.com/xi-ve)
-
-## Help
-
-If you need help with setting up this program, please check the [original project's wiki](https://github.com/pushrax/OpenVR-SpaceCalibrator/wiki), or join the [Discord server](https://discord.gg/ja3WgNjC3z).
