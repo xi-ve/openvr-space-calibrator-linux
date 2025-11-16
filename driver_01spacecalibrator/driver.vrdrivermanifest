@@ -1,0 +1,8 @@
+{
+	"alwaysActivate": true,
+	"name" : "01spacecalibrator",
+	"directory" : "./driver_01spacecalibrator",
+	"resourceOnly" : false,
+	"activateOtherDriversWhenEnabled" : true
+}
+
