@@ -64,7 +64,29 @@ exec "$SCRIPT_DIR/space-calibrator-real" "$@"
 WRAPPER_EOF
 chmod +x "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator"
 
-cp "$PKG_DIR/manifest.vrmanifest" "$STEAMVR_DRIVERS_DIR/bin/linux64/"
+if [ -f "$PKG_DIR/manifest.vrmanifest" ] && [ -s "$PKG_DIR/manifest.vrmanifest" ]; then
+    cp "$PKG_DIR/manifest.vrmanifest" "$STEAMVR_DRIVERS_DIR/bin/linux64/"
+else
+    cat > "$STEAMVR_DRIVERS_DIR/bin/linux64/manifest.vrmanifest" << 'MANIFEST_EOF'
+{
+	"source" : "builtin",
+	"applications": [{
+		"app_key": "spacecalibrator.linux",
+		"launch_type": "binary",
+		"binary_path_linux": "space-calibrator",
+		"is_dashboard_overlay": true,
+
+		"strings": {
+			"en_us": {
+				"name": "Space Calibrator",
+				"description": "Space Calibrator Overlay"
+			}
+		}
+	}]
+}
+MANIFEST_EOF
+fi
+
 cat > "$STEAMVR_DRIVERS_DIR/driver.vrdrivermanifest" << 'DRIVER_MANIFEST_EOF'
 {
 	"alwaysActivate": true,
