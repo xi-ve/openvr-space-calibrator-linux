@@ -27,23 +27,26 @@ build() {
   
   OPENVR_HEADERS=""
   for path in \
-    "$HOME/.local/share/Steam/steamapps/common/SteamVR/headers" \
-    "$HOME/.steam/steam/steamapps/common/SteamVR/headers" \
-    "$HOME/.steam/root/steamapps/common/SteamVR/headers" \
+    "${HOME}/.local/share/Steam/steamapps/common/SteamVR/headers" \
+    "${HOME}/.steam/steam/steamapps/common/SteamVR/headers" \
+    "${HOME}/.steam/root/steamapps/common/SteamVR/headers" \
     "/usr/include/openvr" \
     "/usr/local/include/openvr"; do
-    if [ -f "$path/openvr.h" ] || [ -f "$path/openvr_driver.h" ]; then
+    if [ -n "$path" ] && [ -f "$path/openvr.h" ] 2>/dev/null; then
       OPENVR_HEADERS="$path"
       break
     fi
   done
   
   if [ -z "$OPENVR_HEADERS" ]; then
-    echo "ERROR: OpenVR headers not found. Please install SteamVR or openvr package."
-    return 1
+    echo "WARNING: OpenVR headers not found in standard locations."
+    echo "Attempting to build anyway - CMake will try to find them."
+    cmake ..
+  else
+    echo "Using OpenVR headers from: $OPENVR_HEADERS"
+    cmake .. -DOPENVR_INCLUDE_DIR="$OPENVR_HEADERS"
   fi
   
-  cmake .. -DOPENVR_INCLUDE_DIR="$OPENVR_HEADERS"
   make -j$(nproc)
 }
 
