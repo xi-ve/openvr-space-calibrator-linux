@@ -22,3 +22,74 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 add_subdirectory(src)
 
+find_path(OPENVR_INCLUDE_DIR openvr.h
+    PATHS
+        ${CMAKE_SOURCE_DIR}/../lib/openvr/headers
+        ${CMAKE_SOURCE_DIR}/../WindowsEdition/OpenVR-SpaceCalibrator/lib/openvr/headers
+        $ENV{HOME}/.local/share/Steam/steamapps/common/SteamVR/headers
+        $ENV{HOME}/.steam/steam/steamapps/common/SteamVR/headers
+        $ENV{HOME}/.steam/root/steamapps/common/SteamVR/headers
+        /usr/include/openvr
+        /usr/local/include/openvr
+    NO_DEFAULT_PATH
+)
+
+if(NOT OPENVR_INCLUDE_DIR)
+    find_path(OPENVR_INCLUDE_DIR openvr.h)
+endif()
+
+if(OPENVR_LIB_DIR)
+    set(OPENVR_LIB "${OPENVR_LIB_DIR}/libopenvr_api.so")
+    if(EXISTS "${OPENVR_LIB}")
+        message(STATUS "Using OpenVR library from: ${OPENVR_LIB}")
+        set(OPENVR_LIB_FOUND TRUE)
+    else()
+        unset(OPENVR_LIB)
+        set(OPENVR_LIB_FOUND FALSE)
+    endif()
+else()
+    set(OPENVR_LIB_FOUND FALSE)
+endif()
+
+if(NOT OPENVR_LIB_FOUND)
+    find_library(OPENVR_LIB openvr_api
+        PATHS
+            ${CMAKE_SOURCE_DIR}/../lib/openvr/bin/linux64
+            $ENV{HOME}/.local/share/Steam/steamapps/common/SteamVR/bin/linux64
+            $ENV{HOME}/.steam/steam/steamapps/common/SteamVR/bin/linux64
+            $ENV{HOME}/.steam/root/steamapps/common/SteamVR/bin/linux64
+            /usr/lib
+            /usr/local/lib
+        NO_DEFAULT_PATH
+    )
+    if(OPENVR_LIB)
+        set(OPENVR_LIB_FOUND TRUE)
+        message(STATUS "Found OpenVR library via find_library: ${OPENVR_LIB}")
+    endif()
+endif()
+
+if(NOT OPENVR_LIB_FOUND)
+    find_library(OPENVR_LIB openvr_api)
+    if(OPENVR_LIB)
+        set(OPENVR_LIB_FOUND TRUE)
+        message(STATUS "Found OpenVR library via system search: ${OPENVR_LIB}")
+    endif()
+endif()
+
+if(OPENVR_INCLUDE_DIR AND OPENVR_LIB_FOUND AND OPENVR_LIB)
+    add_executable(register-overlay register-overlay.cpp)
+    target_include_directories(register-overlay PRIVATE ${OPENVR_INCLUDE_DIR})
+    target_link_libraries(register-overlay ${OPENVR_LIB})
+    set_target_properties(register-overlay PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+    message(STATUS "Building register-overlay utility with OpenVR library: ${OPENVR_LIB}")
+elseif(OPENVR_INCLUDE_DIR)
+    message(STATUS "OpenVR headers found, but library not found at build time.")
+    message(STATUS "register-overlay will not be built (overlay can still register itself on first run).")
+    message(STATUS "To build register-overlay, ensure libopenvr_api.so is available.")
+else()
+    message(STATUS "OpenVR headers not found. register-overlay will not be built.")
+    message(STATUS "This is optional - the overlay will register itself on first run.")
+endif()
+
