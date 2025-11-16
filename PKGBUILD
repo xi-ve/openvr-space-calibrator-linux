@@ -1,4 +1,4 @@
-# Maintainer: xi-ve <https://github.com/xi-ve>
+# Maintainer: xi-ve <zunavs@gmail.com>
 pkgname=openvr-space-calibrator-linux
 pkgver=1.5.1
 pkgrel=1
@@ -112,6 +112,9 @@ package() {
   
   # Install README
   install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  
+  # Install LICENSE
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
   
   # Install install script
   install -Dm755 openvr-space-calibrator-install.sh "${pkgdir}/usr/bin/openvr-space-calibrator-install"

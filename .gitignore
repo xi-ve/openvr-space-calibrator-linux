@@ -92,6 +92,11 @@ configure
 *.tar.gz
 *.zip
 
+# Source tarballs (should be downloaded during build, not committed)
+eigen.tar.gz
+imgui.tar.gz
+openvr-headers.tar.gz
+
 # Local configuration
 *.local
 .env
