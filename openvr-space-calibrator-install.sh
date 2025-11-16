@@ -2,7 +2,20 @@
 
 set -e
 
-STEAMVR_DRIVERS_DIR="$HOME/.local/share/SteamVR/drivers/01spacecalibrator"
+USER_HOME="${1:-$HOME}"
+
+if [ "$USER_HOME" = "/root" ] && [ -n "$SUDO_USER" ]; then
+    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+fi
+
+if [ "$USER_HOME" = "/root" ] && [ -z "$SUDO_USER" ]; then
+    REAL_USER=$(who am i | awk '{print $1}')
+    if [ -n "$REAL_USER" ]; then
+        USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+    fi
+fi
+
+STEAMVR_DRIVERS_DIR="$USER_HOME/.local/share/SteamVR/drivers/01spacecalibrator"
 PKG_DIR="/usr/lib/openvr-space-calibrator-linux"
 
 if [ ! -d "$PKG_DIR" ]; then
@@ -21,9 +34,9 @@ cp -r "$PKG_DIR/resources" "$STEAMVR_DRIVERS_DIR/"
 
 VRPATHREG=""
 for path in \
-    "$HOME/.local/share/Steam/steamapps/common/SteamVR/bin/linux64/vrpathreg" \
-    "$HOME/.steam/steam/steamapps/common/SteamVR/bin/linux64/vrpathreg" \
-    "$HOME/.steam/root/steamapps/common/SteamVR/bin/linux64/vrpathreg" \
+    "$USER_HOME/.local/share/Steam/steamapps/common/SteamVR/bin/linux64/vrpathreg" \
+    "$USER_HOME/.steam/steam/steamapps/common/SteamVR/bin/linux64/vrpathreg" \
+    "$USER_HOME/.steam/root/steamapps/common/SteamVR/bin/linux64/vrpathreg" \
     "/usr/local/bin/vrpathreg" \
     "/usr/bin/vrpathreg"; do
     if [ -f "$path" ]; then
