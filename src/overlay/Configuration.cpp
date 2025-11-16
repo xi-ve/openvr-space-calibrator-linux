@@ -51,9 +51,16 @@ AppConfig AppConfig::Load()
                 config.autoRefresh = false;
             }
         } else if (line.find("\"refreshInterval\"") != std::string::npos) {
-            size_t pos = line.find_last_of("0123456789");
+            size_t pos = line.find_first_of("0123456789");
             if (pos != std::string::npos) {
-                config.refreshInterval = std::stoi(line.substr(line.find_last_not_of("0123456789") + 1));
+                size_t end = line.find_first_not_of("0123456789", pos);
+                if (end == std::string::npos) {
+                    end = line.length();
+                }
+                try {
+                    config.refreshInterval = std::stoi(line.substr(pos, end - pos));
+                } catch (...) {
+                }
             }
         }
     }

@@ -65,9 +65,6 @@ vr::EVRInitError ServerTrackedDeviceProvider::Init(vr::IVRDriverContext *pDriver
 	debugTransform = Eigen::Vector3d::Zero();
 	debugRotation = Eigen::Quaterniond::Identity();
 
-	// Launch overlay application
-	LaunchOverlay();
-
 	return vr::VRInitError_None;
 }
 

@@ -34,7 +34,24 @@ fi
 mkdir -p "$STEAMVR_DRIVERS_DIR/bin/linux64"
 
 cp "$DRIVER_SO" "$STEAMVR_DRIVERS_DIR/bin/linux64/driver_01spacecalibrator.so"
-cp "$OVERLAY_BINARY" "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator"
+cp "$OVERLAY_BINARY" "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator-real"
+chmod +x "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator-real"
+
+cat > "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator" << 'WRAPPER_EOF'
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STEAMVR_LIB_DIR=""
+for lib_dir in "$HOME/.local/share/Steam/steamapps/common/SteamVR/bin/linux64" \
+               "$HOME/.steam/steam/steamapps/common/SteamVR/bin/linux64" \
+               "$HOME/.steam/root/steamapps/common/SteamVR/bin/linux64"; do
+    if [ -f "$lib_dir/libopenvr_api.so" ]; then
+        STEAMVR_LIB_DIR="$lib_dir"
+        break
+    fi
+done
+export LD_LIBRARY_PATH="$SCRIPT_DIR:$STEAMVR_LIB_DIR:$LD_LIBRARY_PATH"
+exec "$SCRIPT_DIR/space-calibrator-real" "$@"
+WRAPPER_EOF
 chmod +x "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator"
 
 cat > "$STEAMVR_DRIVERS_DIR/bin/linux64/manifest.vrmanifest" << 'MANIFEST_EOF'
@@ -96,11 +113,97 @@ if [ -n "$VRPATHREG" ]; then
         else
             echo "[?] Driver registration failed (may already be registered)"
         fi
+        
+        OVERLAY_MANIFEST_PATH="$STEAMVR_DRIVERS_DIR/bin/linux64/manifest.vrmanifest"
+        echo "[+] Registering overlay application manifest..."
+        
+        APP_CONFIG="$HOME/.local/share/Steam/config/appconfig.json"
+        if [ -f "$APP_CONFIG" ]; then
+            if ! grep -q "$OVERLAY_MANIFEST_PATH" "$APP_CONFIG" 2>/dev/null; then
+                python3 << PYEOF
+import json
+import os
+
+config_path = "$APP_CONFIG"
+manifest_path = "$OVERLAY_MANIFEST_PATH"
+
+try:
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+    
+    if 'manifest_paths' not in config:
+        config['manifest_paths'] = []
+    
+    if manifest_path not in config['manifest_paths']:
+        config['manifest_paths'].append(manifest_path)
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=4)
+        print("Overlay manifest added to appconfig.json")
+    else:
+        print("Overlay manifest already in appconfig.json")
+except Exception as e:
+    print(f"Failed to update appconfig.json: {e}")
+    exit(1)
+PYEOF
+                if [ $? -eq 0 ]; then
+                    echo "[+] Overlay application registered"
+                else
+                    echo "[?] Overlay application registration failed"
+                fi
+            else
+                echo "[+] Overlay application already registered"
+            fi
+        else
+            echo "[?] appconfig.json not found - overlay will register itself on first launch"
+        fi
     else
         if "$VRPATHREG" adddriver "$STEAMVR_DRIVERS_DIR" 2>/dev/null; then
             echo "[+] Driver registered"
         else
             echo "[?] Driver registration failed (may already be registered)"
+        fi
+        
+        OVERLAY_MANIFEST_PATH="$STEAMVR_DRIVERS_DIR/bin/linux64/manifest.vrmanifest"
+        echo "[+] Registering overlay application manifest..."
+        
+        APP_CONFIG="$HOME/.local/share/Steam/config/appconfig.json"
+        if [ -f "$APP_CONFIG" ]; then
+            if ! grep -q "$OVERLAY_MANIFEST_PATH" "$APP_CONFIG" 2>/dev/null; then
+                python3 << PYEOF
+import json
+import os
+
+config_path = "$APP_CONFIG"
+manifest_path = "$OVERLAY_MANIFEST_PATH"
+
+try:
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+    
+    if 'manifest_paths' not in config:
+        config['manifest_paths'] = []
+    
+    if manifest_path not in config['manifest_paths']:
+        config['manifest_paths'].append(manifest_path)
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=4)
+        print("Overlay manifest added to appconfig.json")
+    else:
+        print("Overlay manifest already in appconfig.json")
+except Exception as e:
+    print(f"Failed to update appconfig.json: {e}")
+    exit(1)
+PYEOF
+                if [ $? -eq 0 ]; then
+                    echo "[+] Overlay application registered"
+                else
+                    echo "[?] Overlay application registration failed"
+                fi
+            else
+                echo "[+] Overlay application already registered"
+            fi
+        else
+            echo "[?] appconfig.json not found - overlay will register itself on first launch"
         fi
     fi
 else
