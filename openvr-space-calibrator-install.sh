@@ -44,8 +44,26 @@ OWNER_USER=$(stat -c '%U' "$USER_HOME" 2>/dev/null || echo "")
 OWNER_GROUP=$(stat -c '%G' "$USER_HOME" 2>/dev/null || echo "")
 
 cp "$PKG_DIR/driver_01spacecalibrator.so" "$STEAMVR_DRIVERS_DIR/bin/linux64/"
-cp /usr/bin/space-calibrator "$STEAMVR_DRIVERS_DIR/bin/linux64/"
+cp /usr/bin/space-calibrator "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator-real"
+chmod +x "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator-real"
+
+cat > "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator" << 'WRAPPER_EOF'
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STEAMVR_LIB_DIR=""
+for lib_dir in "$HOME/.local/share/Steam/steamapps/common/SteamVR/bin/linux64" \
+               "$HOME/.steam/steam/steamapps/common/SteamVR/bin/linux64" \
+               "$HOME/.steam/root/steamapps/common/SteamVR/bin/linux64"; do
+    if [ -f "$lib_dir/libopenvr_api.so" ]; then
+        STEAMVR_LIB_DIR="$lib_dir"
+        break
+    fi
+done
+export LD_LIBRARY_PATH="$SCRIPT_DIR:$STEAMVR_LIB_DIR:$LD_LIBRARY_PATH"
+exec "$SCRIPT_DIR/space-calibrator-real" "$@"
+WRAPPER_EOF
 chmod +x "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator"
+
 cp "$PKG_DIR/manifest.vrmanifest" "$STEAMVR_DRIVERS_DIR/bin/linux64/"
 cat > "$STEAMVR_DRIVERS_DIR/driver.vrdrivermanifest" << 'DRIVER_MANIFEST_EOF'
 {
@@ -102,49 +120,52 @@ else
     echo "Warning: vrpathreg not found - manual registration may be required"
 fi
 
-MANIFEST_PATH="$STEAMVR_DRIVERS_DIR/bin/linux64/manifest.vrmanifest"
+OVERLAY_MANIFEST_PATH="$STEAMVR_DRIVERS_DIR/bin/linux64/manifest.vrmanifest"
 echo ""
-echo "Registering overlay manifest..."
+echo "Registering overlay application manifest..."
 
-if [ -f "$MANIFEST_PATH" ]; then
-    REGISTER_UTIL=""
-    for path in \
-        "/usr/bin/openvr-space-calibrator-register" \
-        "$USER_HOME/.local/bin/openvr-space-calibrator-register"; do
-        if [ -f "$path" ] && [ -x "$path" ]; then
-            REGISTER_UTIL="$path"
-            break
-        fi
-    done
+if [ -n "$VRPATHREG" ] && [ -f "$OVERLAY_MANIFEST_PATH" ]; then
+    APP_CONFIG="$USER_HOME/.local/share/Steam/config/appconfig.json"
+    if [ -f "$APP_CONFIG" ]; then
+        if ! grep -q "$OVERLAY_MANIFEST_PATH" "$APP_CONFIG" 2>/dev/null; then
+            python3 << PYEOF
+import json
+import os
+
+config_path = "$APP_CONFIG"
+manifest_path = "$OVERLAY_MANIFEST_PATH"
+
+try:
+    with open(config_path, 'r') as f:
+        config = json.load(f)
     
-    if [ -n "$REGISTER_UTIL" ]; then
-        OPENVR_LIB_PATH=""
-        for lib_path in \
-            "$USER_HOME/.local/share/Steam/steamapps/common/SteamVR/bin/linux64" \
-            "$USER_HOME/.steam/steam/steamapps/common/SteamVR/bin/linux64" \
-            "$USER_HOME/.steam/root/steamapps/common/SteamVR/bin/linux64"; do
-            if [ -f "$lib_path/libopenvr_api.so" ]; then
-                OPENVR_LIB_PATH="$lib_path"
-                break
-            fi
-        done
-        
-        if [ -n "$OPENVR_LIB_PATH" ]; then
-            # Suppress all output and errors (expected when SteamVR is not running)
-            # Only show a clean message based on exit code
-            if LD_LIBRARY_PATH="$OPENVR_LIB_PATH:$LD_LIBRARY_PATH" "$REGISTER_UTIL" "$MANIFEST_PATH" >/dev/null 2>&1; then
-                echo "Overlay registered successfully"
+    if 'manifest_paths' not in config:
+        config['manifest_paths'] = []
+    
+    if manifest_path not in config['manifest_paths']:
+        config['manifest_paths'].append(manifest_path)
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=4)
+        print("Overlay manifest added to appconfig.json")
+    else:
+        print("Overlay manifest already in appconfig.json")
+except Exception as e:
+    print(f"Failed to update appconfig.json: {e}")
+    exit(1)
+PYEOF
+            if [ $? -eq 0 ]; then
+                echo "Overlay application registered"
             else
-                echo "Note: Overlay will register itself on first run (SteamVR not running)"
+                echo "Note: Overlay application registration failed"
             fi
         else
-            echo "Note: Could not find OpenVR library. Overlay will register itself on first run."
+            echo "Overlay application already registered"
         fi
     else
-        echo "Note: Registration utility not found. Overlay will register itself on first run."
+        echo "Note: appconfig.json not found - overlay will register itself on first launch"
     fi
 else
-    echo "Warning: Manifest file not found at $MANIFEST_PATH"
+    echo "Note: Overlay application will register itself on first launch"
 fi
 
 echo ""
