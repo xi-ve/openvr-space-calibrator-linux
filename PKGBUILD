@@ -8,7 +8,7 @@ url="https://github.com/xi-ve/openvr-space-calibrator-linux"
 license=('MIT')
 depends=('glfw-x11' 'mesa' 'libx11' 'libxrandr' 'libxinerama' 'libxcursor' 'libxi')
 makedepends=('cmake' 'base-devel' 'eigen' 'pkgconf')
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/xi-ve/openvr-space-calibrator-linux/archive/refs/heads/main.tar.gz")
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/xi-ve/openvr-space-calibrator-linux/archive/main.tar.gz")
 sha256sums=('SKIP')
 
 prepare() {
