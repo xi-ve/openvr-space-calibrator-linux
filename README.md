@@ -6,6 +6,36 @@ This is a Linux port of [OpenVR-SpaceCalibrator](https://github.com/hyblocker/Op
 
 Continuous calibration is a tracking mode which automatically aligns playspaces together, using a tracker on the headset.
 
+## Installation
+
+### Arch Linux (AUR)
+
+This package is available on the Arch User Repository (AUR):
+
+```bash
+yay -S openvr-space-calibrator-linux
+```
+
+Or using `makepkg`:
+
+```bash
+git clone https://aur.archlinux.org/openvr-space-calibrator-linux.git
+cd openvr-space-calibrator-linux
+makepkg -si
+```
+
+**AUR Package:** [openvr-space-calibrator-linux](https://aur.archlinux.org/packages/openvr-space-calibrator-linux)
+
+The AUR package will automatically:
+- Install binaries to `/usr/bin`
+- Install the driver and overlay to SteamVR
+- Register the overlay with SteamVR on installation
+- Handle updates and uninstallation
+
+### Building from Source
+
+If you prefer to build from source or are using a different distribution, see the [Building](#building) section below.
+
 ## Requirements
 
 - Linux (tested on Arch Linux)
@@ -48,7 +78,7 @@ sudo pacman -S base-devel cmake glfw-x11 mesa libx11 libxrandr libxinerama libxc
 
 This will build both the driver and overlay components.
 
-## Installation
+### Manual Installation (from source)
 
 1. Build the project (see above)
 2. Install the driver and overlay:
