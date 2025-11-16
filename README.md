@@ -127,6 +127,42 @@ To enable continuous calibration mode, first select your headset on the left col
 4. Turn on your other devices.
 5. You should see them line up with you as you after moving around your playspace for a bit for an initial calibration.
 
+## Playspace Movement
+
+Space Calibrator includes a playspace movement feature that allows you to shift your playspace boundaries using controller input. This is useful for adjusting your playspace position without recalibrating.
+
+### Features
+
+- **Pull Playspace**: Hold a button and move your controller to shift the playspace in the direction of movement
+- **Reset Playspace**: Reset the playspace to its original saved position
+- **Movement Multiplier**: Adjustable multiplier to control how much the playspace moves relative to controller movement
+- **Global Actions**: Works across all VR applications (Steam Home, VRChat, etc.)
+
+### Setup
+
+1. Open the Space Calibrator overlay
+2. Navigate to the "Playspace Movement" tab
+3. Enable "Enable Playspace Movement"
+4. Adjust the "Movement Multiplier" slider (1.0 = 1:1 movement, higher values amplify movement)
+5. Optionally click "Save Original Playspace" to manually save the current playspace as the reset point
+
+### Controller Bindings
+
+The playspace movement actions are global and work across all VR applications. To configure bindings:
+
+1. Open SteamVR Settings > Controllers
+2. Select "Space Calibrator" application
+3. Bind buttons to:
+   - **Reset Playspace**: Resets playspace to saved original position
+   - **Pull Playspace**: Hold and move controller to shift playspace
+
+> **Note:** Enable "Experimental overlay input overrides" in Developer settings for best compatibility.
+
+### Usage
+
+- **Pulling the Playspace**: Hold the bound "Pull Playspace" button and move your controller. The playspace will shift in the direction of movement, scaled by the movement multiplier. The first pull automatically saves the current playspace as a reference.
+- **Resetting**: Press the bound "Reset Playspace" button to return to the original saved position. After resetting, the next pull will save the reset position as a new reference.
+
 ## Credits
 
 - **Original Project:** [OpenVR-SpaceCalibrator](https://github.com/hyblocker/OpenVR-SpaceCalibrator) by [@hyblocker](https://github.com/hyblocker)

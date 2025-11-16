@@ -47,6 +47,9 @@ cp "$PKG_DIR/driver_01spacecalibrator.so" "$STEAMVR_DRIVERS_DIR/bin/linux64/"
 cp /usr/bin/space-calibrator "$STEAMVR_DRIVERS_DIR/bin/linux64/"
 chmod +x "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator"
 cp "$PKG_DIR/manifest.vrmanifest" "$STEAMVR_DRIVERS_DIR/bin/linux64/"
+if [ -f "$PKG_DIR/actions.json" ]; then
+    cp "$PKG_DIR/actions.json" "$STEAMVR_DRIVERS_DIR/bin/linux64/actions.json"
+fi
 cat > "$STEAMVR_DRIVERS_DIR/driver.vrdrivermanifest" << 'DRIVER_MANIFEST_EOF'
 {
 	"alwaysActivate": true,

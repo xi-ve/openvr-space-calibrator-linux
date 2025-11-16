@@ -8,6 +8,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DRIVER_SO="$PROJECT_ROOT/build/lib/driver_01spacecalibrator.so"
 OVERLAY_BINARY="$PROJECT_ROOT/build/bin/space-calibrator"
 OVERLAY_MANIFEST="$PROJECT_ROOT/build/manifest.vrmanifest"
+OVERLAY_ACTIONS="$PROJECT_ROOT/build/actions.json"
 DRIVER_DIR="$PROJECT_ROOT/driver_01spacecalibrator"
 STEAMVR_DRIVERS_DIR="$HOME/.local/share/SteamVR/drivers/01spacecalibrator"
 
@@ -37,6 +38,10 @@ cp "$DRIVER_SO" "$STEAMVR_DRIVERS_DIR/bin/linux64/driver_01spacecalibrator.so"
 cp "$OVERLAY_BINARY" "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator-real"
 chmod +x "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator-real"
 
+if [ -f "$OVERLAY_ACTIONS" ]; then
+    cp "$OVERLAY_ACTIONS" "$STEAMVR_DRIVERS_DIR/bin/linux64/actions.json"
+fi
+
 cat > "$STEAMVR_DRIVERS_DIR/bin/linux64/space-calibrator" << 'WRAPPER_EOF'
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -62,6 +67,7 @@ cat > "$STEAMVR_DRIVERS_DIR/bin/linux64/manifest.vrmanifest" << 'MANIFEST_EOF'
 		"launch_type": "binary",
 		"binary_path_linux": "space-calibrator",
 		"is_dashboard_overlay": true,
+		"action_manifest_path": "actions.json",
 
 		"strings": {
 			"en_us": {

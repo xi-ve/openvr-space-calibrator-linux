@@ -5,6 +5,7 @@
 		"launch_type": "binary",
 		"binary_path_linux": "space-calibrator",
 		"is_dashboard_overlay": true,
+		"action_manifest_path": "actions.json",
 
 		"strings": {
 			"en_us": {
