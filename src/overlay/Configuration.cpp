@@ -43,22 +43,72 @@ AppConfig AppConfig::Load()
     }
     
     std::string line;
+    std::string json;
     while (std::getline(file, line)) {
-        if (line.find("\"autoRefresh\"") != std::string::npos) {
-            if (line.find("true") != std::string::npos) {
+        json += line + "\n";
+    }
+    
+    if (json.find("\"autoRefresh\"") != std::string::npos) {
+        if (json.find("\"autoRefresh\"") != std::string::npos) {
+            size_t pos = json.find("\"autoRefresh\"");
+            if (json.find("true", pos) != std::string::npos) {
                 config.autoRefresh = true;
-            } else if (line.find("false") != std::string::npos) {
+            } else if (json.find("false", pos) != std::string::npos) {
                 config.autoRefresh = false;
             }
-        } else if (line.find("\"refreshInterval\"") != std::string::npos) {
-            size_t pos = line.find_first_of("0123456789");
+        }
+    }
+    
+    if (json.find("\"refreshInterval\"") != std::string::npos) {
+        size_t pos = json.find("\"refreshInterval\"");
+        pos = json.find_first_of("0123456789", pos);
+        if (pos != std::string::npos) {
+            size_t end = json.find_first_not_of("0123456789", pos);
+            if (end == std::string::npos) {
+                end = json.length();
+            }
+            try {
+                config.refreshInterval = std::stoi(json.substr(pos, end - pos));
+            } catch (...) {
+            }
+        }
+    }
+    
+    if (json.find("\"playspaceMovementEnabled\"") != std::string::npos) {
+        size_t pos = json.find("\"playspaceMovementEnabled\"");
+        if (json.find("true", pos) != std::string::npos) {
+            config.playspaceMovementEnabled = true;
+        } else if (json.find("false", pos) != std::string::npos) {
+            config.playspaceMovementEnabled = false;
+        }
+    }
+    
+    if (json.find("\"playspaceMovementMultiplier\"") != std::string::npos) {
+        size_t pos = json.find("\"playspaceMovementMultiplier\"");
+        pos = json.find_first_of("0123456789.", pos);
+        if (pos != std::string::npos) {
+            size_t end = json.find_first_not_of("0123456789.", pos);
+            if (end == std::string::npos) {
+                end = json.length();
+            }
+            try {
+                config.playspaceMovementMultiplier = std::stof(json.substr(pos, end - pos));
+            } catch (...) {
+            }
+        }
+    }
+    
+    if (json.find("\"playspaceForceStrength\"") != std::string::npos || json.find("\"playspacePullStrength\"") != std::string::npos) {
+        if (json.find("\"playspacePullStrength\"") != std::string::npos) {
+            size_t pos = json.find("\"playspacePullStrength\"");
+            pos = json.find_first_of("0123456789.", pos);
             if (pos != std::string::npos) {
-                size_t end = line.find_first_not_of("0123456789", pos);
+                size_t end = json.find_first_not_of("0123456789.", pos);
                 if (end == std::string::npos) {
-                    end = line.length();
+                    end = json.length();
                 }
                 try {
-                    config.refreshInterval = std::stoi(line.substr(pos, end - pos));
+                    config.playspaceMovementMultiplier = std::stof(json.substr(pos, end - pos));
                 } catch (...) {
                 }
             }
@@ -80,7 +130,9 @@ void AppConfig::Save() const
     
     file << "{\n";
     file << "  \"autoRefresh\": " << (autoRefresh ? "true" : "false") << ",\n";
-    file << "  \"refreshInterval\": " << refreshInterval << "\n";
+    file << "  \"refreshInterval\": " << refreshInterval << ",\n";
+    file << "  \"playspaceMovementEnabled\": " << (playspaceMovementEnabled ? "true" : "false") << ",\n";
+    file << "  \"playspaceMovementMultiplier\": " << playspaceMovementMultiplier << "\n";
     file << "}\n";
     
     file.close();

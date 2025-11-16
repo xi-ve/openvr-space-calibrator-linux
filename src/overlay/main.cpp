@@ -15,6 +15,7 @@
 #include "Telemetry.h"
 #include "Calibration.h"
 #include "CalibrationUI.h"
+#include "PlayspaceMovement.h"
 #include "Logging.h"
 #include <thread>
 #include <chrono>
@@ -533,8 +534,13 @@ void BuildDevicesTab(VRState& vrState, AppConfig& config)
     }
 }
 
+static PlayspaceMovement* g_playspaceMovement = nullptr;
+
+AppConfig* g_appConfig = nullptr;
+
 void BuildMainWindow(VRState& vrState, AppConfig& config, bool runningInOverlay = false)
 {
+	g_appConfig = &config;
     auto& io = ImGui::GetIO();
     ImGuiWindowFlags windowFlags = 
         ImGuiWindowFlags_NoTitleBar | 
@@ -586,6 +592,14 @@ void BuildMainWindow(VRState& vrState, AppConfig& config, bool runningInOverlay 
             ImGui::EndTabItem();
         }
         
+        if (ImGui::BeginTabItem("Playspace Movement"))
+        {
+            if (g_playspaceMovement) {
+                BuildPlayspaceMovementTab(*g_playspaceMovement);
+            }
+            ImGui::EndTabItem();
+        }
+        
         ImGui::EndTabBar();
     }
 
@@ -623,6 +637,16 @@ void RunLoop()
     InitCalibrator();
     LoadProfile(CalCtx);
     
+    static PlayspaceMovement playspaceMovement;
+    playspaceMovement.settings.enabled = config.playspaceMovementEnabled;
+    playspaceMovement.settings.movementMultiplier = config.playspaceMovementMultiplier;
+    
+    g_playspaceMovement = &playspaceMovement;
+    if (!playspaceMovement.Initialize()) {
+        LOG_WARNING("Failed to initialize PlayspaceMovement");
+        g_playspaceMovement = nullptr;
+    }
+    
     static double lastRefreshTime = 0.0;
     double currentTime = glfwGetTime();
     static char textBuf[4096] = {0};
@@ -641,6 +665,9 @@ void RunLoop()
         }
 
         CalibrationTick(currentTime);
+        if (g_playspaceMovement) {
+            g_playspaceMovement->Update();
+        }
         
         int width, height;
         glfwGetFramebufferSize(glfwWindow, &width, &height);

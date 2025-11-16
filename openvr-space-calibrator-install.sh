@@ -75,6 +75,7 @@ else
 		"launch_type": "binary",
 		"binary_path_linux": "space-calibrator",
 		"is_dashboard_overlay": true,
+		"action_manifest_path": "actions.json",
 
 		"strings": {
 			"en_us": {
@@ -87,6 +88,9 @@ else
 MANIFEST_EOF
 fi
 
+if [ -f "$PKG_DIR/actions.json" ]; then
+    cp "$PKG_DIR/actions.json" "$STEAMVR_DRIVERS_DIR/bin/linux64/actions.json"
+fi
 cat > "$STEAMVR_DRIVERS_DIR/driver.vrdrivermanifest" << 'DRIVER_MANIFEST_EOF'
 {
 	"alwaysActivate": true,

@@ -17,3 +17,6 @@ void CCal_BasicInfo();
 void CCal_DrawSettings();
 void DrawVectorElement(const std::string id, const char* text, double* value, int defaultValue = 0, const char* defaultValueStr = " 0 ");
 
+class PlayspaceMovement;
+void BuildPlayspaceMovementTab(PlayspaceMovement& playspaceMovement);
+

@@ -17,6 +17,9 @@ struct AppConfig
     int refreshInterval = 1000;
     std::vector<DeviceConfig> favoriteDevices;
     
+    bool playspaceMovementEnabled = false;
+    float playspaceMovementMultiplier = 1.0f;
+    
     static AppConfig Load();
     void Save() const;
     

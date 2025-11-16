@@ -1,0 +1,32 @@
+{
+	"actions": [
+		{
+			"name": "/actions/playspace/in/ResetPlayspace",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/playspace/in/PullPlayspace",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/playspace/in/ControllerPose",
+			"type": "pose"
+		}
+	],
+	"action_sets": [
+		{
+			"name": "/actions/playspace",
+			"usage": "single"
+		}
+	],
+	"default_bindings": [],
+	"localization": [
+		{
+			"language_tag": "en_US",
+			"/actions/playspace/in/ResetPlayspace": "Reset Playspace",
+			"/actions/playspace/in/PullPlayspace": "Pull Playspace",
+			"/actions/playspace/in/ControllerPose": "Controller Pose"
+		}
+	]
+}
+

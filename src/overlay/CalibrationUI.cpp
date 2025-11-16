@@ -3,6 +3,8 @@
 #include "VRState.h"
 #include "CalibrationMetrics.h"
 #include "CalibrationDebug.h"
+#include "PlayspaceMovement.h"
+#include "Configuration.h"
 #include "imgui_extensions.h"
 #include "../common/Version.h"
 #include "imgui.h"
@@ -889,5 +891,79 @@ void BuildCalibrationTab(VRState& vrState)
 	BuildDeviceSelections(state);
 	ImGui::EndDisabled();
 	BuildCalibrationMenu();
+}
+
+void BuildPlayspaceMovementTab(PlayspaceMovement& playspaceMovement)
+{
+	extern AppConfig* g_appConfig;
+	
+	ImGui::Text("Playspace Movement");
+	ImGui::Separator();
+	
+	bool enabledChanged = false;
+	if (ImGui::Checkbox("Enable Playspace Movement", &playspaceMovement.settings.enabled)) {
+		enabledChanged = true;
+	}
+	
+	if (playspaceMovement.settings.enabled)
+	{
+		ImGui::Spacing();
+		ImGui::Text("Settings:");
+		
+		bool multiplierChanged = false;
+		if (ImGui::SliderFloat("Movement Multiplier", &playspaceMovement.settings.movementMultiplier, 0.1f, 10.0f, "%.2f")) {
+			multiplierChanged = true;
+		}
+		ImGui::TextWrapped("Multiplier: Moving controller 1 unit moves playspace by %.2f units", playspaceMovement.settings.movementMultiplier);
+		
+		if ((enabledChanged || multiplierChanged) && g_appConfig) {
+			g_appConfig->playspaceMovementEnabled = playspaceMovement.settings.enabled;
+			g_appConfig->playspaceMovementMultiplier = playspaceMovement.settings.movementMultiplier;
+			g_appConfig->Save();
+		}
+		
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+		
+		if (ImGui::Button("Save Original Playspace", ImVec2(-1, 0)))
+		{
+			playspaceMovement.SaveOriginalPlayspace();
+		}
+		
+		ImGui::Spacing();
+		
+		if (ImGui::Button("Reset to Original Playspace", ImVec2(-1, 0)))
+		{
+			playspaceMovement.ResetPlayspace();
+		}
+		
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+		
+		ImGui::TextWrapped("Controller Actions (Global):");
+		ImGui::BulletText("Reset Playspace: Resets playspace to saved original position");
+		ImGui::BulletText("Pull Playspace: Hold and move controller to shift playspace");
+		
+		ImGui::Spacing();
+		ImGui::TextWrapped("These actions work globally across all VR applications.");
+		ImGui::TextWrapped("To configure bindings:");
+		ImGui::BulletText("Open SteamVR Settings > Controllers");
+		ImGui::BulletText("Select 'Space Calibrator' application");
+		ImGui::BulletText("Bind buttons to Reset Playspace and Pull Playspace");
+		ImGui::BulletText("Enable 'Experimental overlay input overrides' in Developer settings for best compatibility");
+		
+		if (!playspaceMovement.settings.original.saved)
+		{
+			ImGui::Spacing();
+			ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Warning: Original playspace not saved. Save it before using reset.");
+		}
+	}
+	else
+	{
+		ImGui::Spacing();
+		ImGui::TextWrapped("Enable playspace movement to use controller actions to reset or shift your playspace.");
+	}
 }
 

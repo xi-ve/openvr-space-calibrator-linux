@@ -142,6 +142,8 @@ set(SOURCES
     CalibrationUI.h
     CalibrationDebug.cpp
     CalibrationDebug.h
+    PlayspaceMovement.cpp
+    PlayspaceMovement.h
     imgui_extensions.cpp
     imgui_extensions.h
     ProfileManager.cpp
@@ -195,12 +197,20 @@ target_compile_definitions(space-calibrator PRIVATE
     SPACECAL_VERSION_STRING="1.5.1-linux"
 )
 
-# Copy manifest to build directory
+# Copy manifest and actions.json to build directory
 add_custom_command(
     TARGET space-calibrator POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_SOURCE_DIR}/src/overlay/manifest.vrmanifest
     ${CMAKE_BINARY_DIR}/manifest.vrmanifest
     COMMENT "Copying overlay manifest to build directory"
+)
+
+add_custom_command(
+    TARGET space-calibrator POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_SOURCE_DIR}/src/overlay/actions.json
+    ${CMAKE_BINARY_DIR}/actions.json
+    COMMENT "Copying actions manifest to build directory"
 )
 
