@@ -130,10 +130,12 @@ if [ -f "$MANIFEST_PATH" ]; then
         done
         
         if [ -n "$OPENVR_LIB_PATH" ]; then
-            if LD_LIBRARY_PATH="$OPENVR_LIB_PATH:$LD_LIBRARY_PATH" "$REGISTER_UTIL" "$MANIFEST_PATH" 2>&1; then
+            # Suppress all output and errors (expected when SteamVR is not running)
+            # Only show a clean message based on exit code
+            if LD_LIBRARY_PATH="$OPENVR_LIB_PATH:$LD_LIBRARY_PATH" "$REGISTER_UTIL" "$MANIFEST_PATH" >/dev/null 2>&1; then
                 echo "Overlay registered successfully"
             else
-                echo "Note: Overlay registration failed (SteamVR may need to be running)"
+                echo "Note: Overlay will register itself on first run (SteamVR not running)"
             fi
         else
             echo "Note: Could not find OpenVR library. Overlay will register itself on first run."
