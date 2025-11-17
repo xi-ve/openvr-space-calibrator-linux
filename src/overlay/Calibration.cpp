@@ -292,11 +292,27 @@ void ScanAndApplyProfile(CalibrationContext &ctx)
 
 void StartCalibration() {
 	CalCtx.hasAppliedCalibrationResult = false;
-	AssignTargets();
-	CalCtx.state = CalibrationState::Begin;
-	CalCtx.wantedUpdateInterval = 0.0;
 	CalCtx.messages.clear();
 	calibration.Clear();
+	
+	if (!vr::VRSystem()) {
+		CalCtx.Log("Error: OpenVR system not available. Make sure SteamVR is running.\n");
+		return;
+	}
+	
+	bool targetsAssigned = AssignTargets();
+	if (!targetsAssigned) {
+		if (CalCtx.referenceID < 0) {
+			CalCtx.Log("Error: Reference device not found. Please select a reference device.\n");
+		}
+		if (CalCtx.targetID < 0) {
+			CalCtx.Log("Error: Target device not found. Please select a target device.\n");
+		}
+		return;
+	}
+	
+	CalCtx.state = CalibrationState::Begin;
+	CalCtx.wantedUpdateInterval = 0.0;
 	Metrics::WriteLogAnnotation("StartCalibration");
 }
 

@@ -9,6 +9,10 @@ VRState VRState::Load()
 	VRState state;
 	auto& trackingSystems = state.trackingSystems;
 
+	if (!vr::VRSystem()) {
+		return state;
+	}
+
 	char buffer[vr::k_unMaxPropertyStringSize] = {};
 
 	for (uint32_t id = 0; id < vr::k_unMaxTrackedDeviceCount; ++id)

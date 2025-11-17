@@ -406,8 +406,8 @@ void BuildCalibrationMenu()
 
 		if (ImGui::Button("Start Calibration", ImVec2(buttonWidth, ImGui::GetTextLineHeight() * 2)))
 		{
-			ImGui::OpenPopup("Calibration Progress");
 			StartCalibration();
+			ImGui::OpenPopup("Calibration Progress");
 		}
 
 		ImGui::SameLine();
@@ -537,26 +537,42 @@ void BuildCalibrationMenu()
 		ImGui::Button("Calibration in progress...", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeight() * 2));
 	}
 
+	bool showCalibrationPopup = (CalCtx.state != CalibrationState::None && CalCtx.state != CalibrationState::Editing);
+	if (showCalibrationPopup) {
+		ImGui::OpenPopup("Calibration Progress");
+	}
+	else if (!CalCtx.messages.empty() && CalCtx.state == CalibrationState::None) {
+		ImGui::OpenPopup("Calibration Progress");
+	}
+	
 	auto& io = ImGui::GetIO();
 	ImGui::SetNextWindowPos(ImVec2(20.0f, 20.0f), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x - 40.0f, io.DisplaySize.y - 40.0f), ImGuiCond_Always);
 	if (ImGui::BeginPopupModal("Calibration Progress", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse))
 	{
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImVec4(0, 0, 0, 1));
-		for (auto &message : CalCtx.messages)
+		
+		if (CalCtx.messages.empty())
 		{
-			switch (message.type)
+			ImGui::TextWrapped("Initializing calibration...");
+		}
+		else
+		{
+			for (auto &message : CalCtx.messages)
 			{
-			case CalibrationContext::Message::String:
-				ImGui::TextWrapped("%s", message.str.c_str());
-				break;
-			case CalibrationContext::Message::Progress:
-				float fraction = (float)message.progress / (float)message.target;
-				ImGui::Text("");
-				ImGui::ProgressBar(fraction, ImVec2(-1.0f, 0.0f), "");
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetFontSize() - style.FramePadding.y * 2);
-				ImGui::Text(" %d%%", (int)(fraction * 100));
-				break;
+				switch (message.type)
+				{
+				case CalibrationContext::Message::String:
+					ImGui::TextWrapped("%s", message.str.c_str());
+					break;
+				case CalibrationContext::Message::Progress:
+					float fraction = (float)message.progress / (float)message.target;
+					ImGui::Text("");
+					ImGui::ProgressBar(fraction, ImVec2(-1.0f, 0.0f), "");
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetFontSize() - style.FramePadding.y * 2);
+					ImGui::Text(" %d%%", (int)(fraction * 100));
+					break;
+				}
 			}
 		}
 		ImGui::PopStyleColor();
