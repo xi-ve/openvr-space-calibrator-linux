@@ -1,4 +1,5 @@
 #include "Calibration.h"
+#include "Logging.h"
 #include <fstream>
 #include <filesystem>
 #include <sstream>
@@ -337,9 +338,11 @@ void LoadProfile(CalibrationContext &ctx)
 	ctx.validProfile = false;
 
 	std::string profileFile = GetProfileFilePath();
+	LOG_DEBUG("Loading profile from: " + profileFile);
 	std::ifstream file(profileFile);
 	
 	if (!file.is_open()) {
+		LOG_INFO("Profile file not found, starting with empty profile");
 		std::cout << "Profile file not found, starting with empty profile" << std::endl;
 		ctx.Clear();
 		return;
@@ -347,13 +350,16 @@ void LoadProfile(CalibrationContext &ctx)
 
 	try {
 		ParseProfile(ctx, file);
+		LOG_INFO("Profile loaded successfully from " + profileFile);
 		std::cout << "Loaded profile from " << profileFile << std::endl;
 	} catch (const std::exception &e) {
+		LOG_ERROR("Error loading profile: " + std::string(e.what()));
 		std::cerr << "Error loading profile: " << e.what() << std::endl;
 		ctx.Clear();
 	}
 	
 	file.close();
+	ScanAndApplyProfile(ctx);
 }
 
 void SaveProfile(CalibrationContext &ctx)
@@ -362,15 +368,23 @@ void SaveProfile(CalibrationContext &ctx)
 	
 	if (!ctx.validProfile) {
 		if (std::filesystem::exists(profileFile)) {
+			LOG_INFO("Deleting invalid profile file: " + profileFile);
 			std::filesystem::remove(profileFile);
 			std::cout << "Deleted profile file: " << profileFile << std::endl;
 		}
 		return;
 	}
 
+	bool isContinuousMode = (ctx.state == CalibrationState::Continuous || ctx.state == CalibrationState::ContinuousStandby);
+	
+	if (!isContinuousMode) {
+		LOG_DEBUG("Saving profile to: " + profileFile);
+	}
+	
 	std::ofstream file(profileFile);
 	
 	if (!file.is_open()) {
+		LOG_ERROR("Could not open profile file for writing: " + profileFile);
 		std::cerr << "Error: Could not open profile file for writing: " << profileFile << std::endl;
 		return;
 	}
@@ -378,7 +392,10 @@ void SaveProfile(CalibrationContext &ctx)
 	WriteProfile(ctx, file);
 	file.close();
 	
-	std::cout << "Saved profile to " << profileFile << std::endl;
+	if (!isContinuousMode) {
+		LOG_INFO("Profile saved successfully to " + profileFile);
+		std::cout << "Saved profile to " << profileFile << std::endl;
+	}
 }
 
 bool ExportProfile(CalibrationContext &ctx, const std::string &filePath)

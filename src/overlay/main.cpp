@@ -626,11 +626,13 @@ void BuildMainWindow(VRState& vrState, AppConfig& config, bool runningInOverlay 
 void RunLoop()
 {
     Logger::GetInstance().Initialize();
-    LOG_INFO("Space Calibrator starting");
+    LOG_INFO("Space Calibrator starting - Version: " + std::string(SPACECAL_VERSION_STRING));
+    LOG_INFO("Log file location: " + Logger::GetInstance().GetLogFilePath());
     
     // Register overlay manifest if not already registered
     VerifySetupCorrect();
     
+    LOG_DEBUG("Loading VR state and configuration");
     VRState vrState = VRState::Load();
     AppConfig config = AppConfig::Load();
     

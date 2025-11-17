@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iostream>
 #include "../common/Protocol.h"
+#include "Logging.h"
 
 enum class CalibrationState
 {
@@ -183,6 +184,8 @@ struct CalibrationContext
 
 		messages.back().str += msg;
 		std::cerr << msg;
+		
+		Logger::GetInstance().Info("Calibration: " + msg);
 
 		while (messages.size() > 15) messages.pop_front();
 	}

@@ -179,10 +179,14 @@ namespace {
 
 void InitCalibrator()
 {
+	LOG_INFO("Initializing calibrator - connecting to driver");
 	try {
 		Driver.Connect();
+		LOG_INFO("Driver connection successful");
 		shmem.Open(OPENVR_SPACECALIBRATOR_SHMEM_NAME);
+		LOG_INFO("Shared memory opened successfully");
 	} catch (const std::runtime_error& e) {
+		LOG_WARNING("Could not connect to driver: " + std::string(e.what()));
 		std::cerr << "Warning: Could not connect to driver: " << e.what() << std::endl;
 	}
 }
@@ -291,32 +295,39 @@ void ScanAndApplyProfile(CalibrationContext &ctx)
 }
 
 void StartCalibration() {
+	LOG_INFO("Starting calibration process");
 	CalCtx.hasAppliedCalibrationResult = false;
 	CalCtx.messages.clear();
 	calibration.Clear();
 	
 	if (!vr::VRSystem()) {
+		LOG_ERROR("OpenVR system not available - SteamVR may not be running");
 		CalCtx.Log("Error: OpenVR system not available. Make sure SteamVR is running.\n");
 		return;
 	}
 	
+	LOG_DEBUG("Assigning calibration targets");
 	bool targetsAssigned = AssignTargets();
 	if (!targetsAssigned) {
 		if (CalCtx.referenceID < 0) {
+			LOG_WARNING("Reference device not found for calibration");
 			CalCtx.Log("Error: Reference device not found. Please select a reference device.\n");
 		}
 		if (CalCtx.targetID < 0) {
+			LOG_WARNING("Target device not found for calibration");
 			CalCtx.Log("Error: Target device not found. Please select a target device.\n");
 		}
 		return;
 	}
 	
+	LOG_INFO("Calibration targets assigned - Reference ID: " + std::to_string(CalCtx.referenceID) + ", Target ID: " + std::to_string(CalCtx.targetID));
 	CalCtx.state = CalibrationState::Begin;
 	CalCtx.wantedUpdateInterval = 0.0;
 	Metrics::WriteLogAnnotation("StartCalibration");
 }
 
 void StartContinuousCalibration() {
+	LOG_INFO("Starting continuous calibration");
 	CalCtx.hasAppliedCalibrationResult = false;
 	AssignTargets();
 	StartCalibration();
@@ -324,15 +335,18 @@ void StartContinuousCalibration() {
 	calibration.setRelativeTransformation(CalCtx.refToTargetPose, CalCtx.relativePosCalibrated);
 	calibration.lockRelativePosition = CalCtx.lockRelativePosition;
 	if (CalCtx.lockRelativePosition) {
+		LOG_INFO("Continuous calibration: Relative position locked");
 		CalCtx.Log("Relative position locked");
 	}
 	else {
+		LOG_INFO("Continuous calibration: Collecting initial samples");
 		CalCtx.Log("Collecting initial samples...");
 	}
 	Metrics::WriteLogAnnotation("StartContinuousCalibration");
 }
 
 void EndContinuousCalibration() {
+	LOG_INFO("Ending continuous calibration");
 	CalCtx.state = CalibrationState::None;
 	CalCtx.relativePosCalibrated = false;
 	CalCtx.messages.clear();
@@ -403,7 +417,11 @@ void CalibrationTick(double time)
 		}
 		else {
 			ctx.wantedUpdateInterval = 0.5;
-			ctx.Log("Waiting for devices...\n");
+			static double lastWaitingLogTime = 0.0;
+			if (time - lastWaitingLogTime > 5.0) {
+				ctx.Log("Waiting for devices...\n");
+				lastWaitingLogTime = time;
+			}
 			return;
 		}
 	}
@@ -450,6 +468,8 @@ void CalibrationTick(double time)
 		snprintf(buf, sizeof buf, "Target device ID: %d, serial %s\n", ctx.targetID, targetSerial);
 		CalCtx.Log(buf);
 
+		LOG_DEBUG("Calibration Begin: Reference=" + std::string(referenceSerial) + ", Target=" + std::string(targetSerial));
+
 		ScanAndApplyProfile(ctx);
 
 		Metrics::jitterRef.Push(calibration.ReferenceJitter());
@@ -457,18 +477,22 @@ void CalibrationTick(double time)
 
 		if (!CalCtx.ReferencePoseIsValidSimple())
 		{
+			LOG_WARNING("Reference device pose is invalid");
 			CalCtx.Log("Reference device is not tracking\n"); ok = false;
 		}
 
 		if (!CalCtx.TargetPoseIsValidSimple())
 		{
+			LOG_WARNING("Target device pose is invalid");
 			CalCtx.Log("Target device is not tracking\n"); ok = false;
 		}
 		
 		if (calibration.ReferenceJitter() > ctx.jitterThreshold) {
+			LOG_WARNING("Reference device jitter too high: " + std::to_string(calibration.ReferenceJitter()) + " > " + std::to_string(ctx.jitterThreshold));
 			CalCtx.Log("Reference device is not tracking\n"); ok = false;
 		}
 		if (calibration.TargetJitter() > ctx.jitterThreshold) {
+			LOG_WARNING("Target device jitter too high: " + std::to_string(calibration.TargetJitter()) + " > " + std::to_string(ctx.jitterThreshold));
 			CalCtx.Log("Target device is not tracking\n"); ok = false;
 		}
 
@@ -476,6 +500,7 @@ void CalibrationTick(double time)
 			ctx.state = CalibrationState::Rotation;
 			ctx.wantedUpdateInterval = 0.0;
 
+			LOG_INFO("Calibration validation passed - entering rotation phase");
 			CalCtx.Log("Starting calibration...\n");
 			return;
 		}
@@ -486,6 +511,7 @@ void CalibrationTick(double time)
 		if (ctx.state != CalibrationState::Continuous) {
 			ctx.state = CalibrationState::None;
 
+			LOG_WARNING("Calibration aborted due to validation failure");
 			CalCtx.Log("Aborting calibration!\n");
 		}
 		return;
@@ -527,15 +553,34 @@ void CalibrationTick(double time)
 		auto vrRot = VRRotationQuat(Eigen::Quaterniond(calibration.Transformation().rotation()));
 
 		ctx.validProfile = true;
-		SaveProfile(ctx);
+		
+		if (CalCtx.state == CalibrationState::Continuous) {
+			static double lastContinuousSaveLogTime = 0.0;
+			SaveProfile(ctx);
+			if (time - lastContinuousSaveLogTime > 30.0) {
+				LOG_DEBUG("Continuous calibration: Profile saved (throttled logging)");
+				lastContinuousSaveLogTime = time;
+			}
+		} else {
+			SaveProfile(ctx);
+			LOG_INFO("Calibration completed successfully - profile saved");
+			CalCtx.Log("Finished calibration, profile saved\n");
+		}
 
 		ScanAndApplyProfile(ctx);
 
 		CalCtx.hasAppliedCalibrationResult = true;
-
-		CalCtx.Log("Finished calibration, profile saved\n");
 	} else {
-		CalCtx.Log("Calibration failed.\n");
+		static double lastFailureLogTime = 0.0;
+		if (CalCtx.state == CalibrationState::Continuous) {
+			if (time - lastFailureLogTime > 10.0) {
+				LOG_WARNING("Calibration computation failed - result is invalid (throttled)");
+				lastFailureLogTime = time;
+			}
+		} else {
+			LOG_WARNING("Calibration computation failed - result is invalid");
+			CalCtx.Log("Calibration failed.\n");
+		}
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
