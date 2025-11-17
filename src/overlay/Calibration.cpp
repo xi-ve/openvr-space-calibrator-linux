@@ -335,6 +335,7 @@ void StartContinuousCalibration() {
 void EndContinuousCalibration() {
 	CalCtx.state = CalibrationState::None;
 	CalCtx.relativePosCalibrated = false;
+	CalCtx.messages.clear();
 	SaveProfile(CalCtx);
 	Metrics::WriteLogAnnotation("EndContinuousCalibration");
 }

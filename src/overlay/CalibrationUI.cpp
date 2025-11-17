@@ -541,7 +541,7 @@ void BuildCalibrationMenu()
 	if (showCalibrationPopup) {
 		ImGui::OpenPopup("Calibration Progress");
 	}
-	else if (!CalCtx.messages.empty() && CalCtx.state == CalibrationState::None) {
+	else if (!CalCtx.messages.empty() && CalCtx.state == CalibrationState::None && ImGui::IsPopupOpen("Calibration Progress", ImGuiPopupFlags_None)) {
 		ImGui::OpenPopup("Calibration Progress");
 	}
 	
@@ -580,8 +580,10 @@ void BuildCalibrationMenu()
 		if (CalCtx.state == CalibrationState::None)
 		{
 			ImGui::Text("");
-			if (ImGui::Button("Close", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeight() * 2)))
+			if (ImGui::Button("Close", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeight() * 2))) {
+				CalCtx.messages.clear();
 				ImGui::CloseCurrentPopup();
+			}
 		}
 
 		ImGui::EndPopup();
