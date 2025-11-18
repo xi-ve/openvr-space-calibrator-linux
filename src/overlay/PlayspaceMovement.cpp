@@ -135,11 +135,18 @@ void PlayspaceMovement::Shutdown()
 		return;
 	}
 
+	if (m_pullReference.workingCopyInitialized && vr::VRChaperoneSetup()) {
+		vr::VRChaperoneSetup()->RevertWorkingCopy();
+		m_pullReference.workingCopyInitialized = false;
+	}
+
 	m_actionSet = vr::k_ulInvalidActionSetHandle;
 	m_actionResetPlayspace = vr::k_ulInvalidActionHandle;
 	m_actionPullPlayspace = vr::k_ulInvalidActionHandle;
 	m_actionControllerPose = vr::k_ulInvalidActionHandle;
 	m_initialized = false;
+	m_pullActive = false;
+	m_resetPressedLastFrame = false;
 }
 
 void PlayspaceMovement::SaveOriginalPlayspace()
@@ -314,19 +321,21 @@ void PlayspaceMovement::Update()
 		return;
 	}
 
+	if (!settings.enabled) {
+		return;
+	}
+
 	vr::VRActiveActionSet_t actionSet = { 0 };
 	actionSet.ulActionSet = m_actionSet;
 	actionSet.nPriority = vr::k_nActionSetOverlayGlobalPriorityMin;
 	vr::EVRInputError err = vr::VRInput()->UpdateActionState(&actionSet, sizeof(actionSet), 1);
 	if (err != vr::VRInputError_None) {
-		static int errorCount = 0;
-		if (errorCount++ % 300 == 0) {
-			LOG_ERROR(std::string("Failed to update action state: ") + std::to_string(err));
+		if (err != vr::VRInputError_NoData) {
+			static int errorCount = 0;
+			if (errorCount++ % 300 == 0) {
+				LOG_WARNING(std::string("Failed to update action state: ") + std::to_string(err) + " (VRInputError code)");
+			}
 		}
-		return;
-	}
-
-	if (!settings.enabled) {
 		return;
 	}
 
@@ -335,7 +344,7 @@ void PlayspaceMovement::Update()
 	if (err != vr::VRInputError_None && err != vr::VRInputError_NoData) {
 		static int errorCount = 0;
 		if (errorCount++ % 300 == 0) {
-			LOG_ERROR(std::string("Failed to get ResetPlayspace action data: ") + std::to_string(err));
+			LOG_WARNING(std::string("Failed to get ResetPlayspace action data: ") + std::to_string(err) + " (VRInputError code)");
 		}
 	}
 	
@@ -350,7 +359,7 @@ void PlayspaceMovement::Update()
 	if (err != vr::VRInputError_None && err != vr::VRInputError_NoData) {
 		static int errorCount = 0;
 		if (errorCount++ % 300 == 0) {
-			LOG_ERROR(std::string("Failed to get PullPlayspace action data: ") + std::to_string(err));
+			LOG_WARNING(std::string("Failed to get PullPlayspace action data: ") + std::to_string(err) + " (VRInputError code)");
 		}
 	}
 
