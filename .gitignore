@@ -115,3 +115,9 @@ imgui.ini
 **/imgui.ini
 
 test-package.sh
+
+# AUR-specific files (only needed in aur-repo directory)
+.SRCINFO
+PKGBUILD
+*.install
+openvr-space-calibrator-install.sh
