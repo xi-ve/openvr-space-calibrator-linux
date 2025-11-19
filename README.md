@@ -29,8 +29,14 @@ makepkg -si
 The AUR package will automatically:
 - Install binaries to `/usr/bin`
 - Install the driver and overlay to SteamVR
-- Register the overlay with SteamVR on installation
+- Register the overlay with SteamVR on installation (if SteamVR is running)
 - Handle updates and uninstallation
+
+**Note:** If SteamVR is not running during installation, you may need to:
+1. Launch `space-calibrator` once manually, OR
+2. Manually enable the "Space Calibrator" overlay in SteamVR Settings > Startup/Shutdown > Choose Startup Overlay Apps
+
+After the first launch or manual enabling, the overlay will auto-launch with SteamVR on future starts.
 
 ### Building from Source
 
@@ -85,12 +91,17 @@ This will build both the driver and overlay components.
    ```bash
    ./scripts/install.sh
    ```
-3. Restart SteamVR
+3. If SteamVR is running, the overlay will be registered automatically. If not:
+   - Launch `space-calibrator` once manually, OR
+   - Manually enable the "Space Calibrator" overlay in SteamVR Settings > Startup/Shutdown > Choose Startup Overlay Apps
+4. Restart SteamVR
 
 The installation script will:
 - Copy the driver to your SteamVR drivers directory
 - Copy the overlay binary and manifest
-- Register the overlay with SteamVR
+- Register the overlay with SteamVR (if SteamVR is running)
+
+After the first launch or manual enabling, the overlay will auto-launch with SteamVR on future starts.
 
 ## Usage
 
