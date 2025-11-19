@@ -244,6 +244,13 @@ void VerifySetupCorrect() {
         }
     } else {
         LOG_INFO("Space Calibrator overlay already registered with SteamVR");
+        // Ensure auto-launch is enabled even if already registered
+        auto autoLaunchErr = vr::VRApplications()->SetApplicationAutoLaunch(OPENVR_APPLICATION_KEY, true);
+        if (autoLaunchErr != vr::VRApplicationError_None) {
+            LOG_WARNING(std::string("Failed to set auto-launch: ") + vr::VRApplications()->GetApplicationsErrorNameFromEnum(autoLaunchErr));
+        } else {
+            LOG_INFO("Auto-launch enabled for overlay");
+        }
     }
 }
 
