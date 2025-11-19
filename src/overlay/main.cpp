@@ -161,10 +161,10 @@ void CreateGLFWWindow()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // Allow resizing for desktop mode
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
 
-    // Create window with reasonable default size for desktop mode
-    // FBO will be used for VR overlay rendering
     glfwWindow = glfwCreateWindow(1280, 720, "Space Calibrator - Linux Edition", nullptr, nullptr);
     if (!glfwWindow)
         throw std::runtime_error("Failed to create window");
@@ -680,12 +680,10 @@ void RunLoop()
         {
             dashboardVisible = vr::VROverlay()->IsActiveDashboardOverlay(overlayMainHandle);
             
-            // Minimize window when overlay is active to save resources
             if (dashboardVisible && !glfwGetWindowAttrib(glfwWindow, GLFW_ICONIFIED)) {
                 glfwIconifyWindow(glfwWindow);
-                windowVisible = false; // Window is minimized, don't render to it
+                windowVisible = false;
             } else if (!dashboardVisible && glfwGetWindowAttrib(glfwWindow, GLFW_ICONIFIED)) {
-                // Restore window when overlay is not active
                 glfwRestoreWindow(glfwWindow);
                 glfwGetFramebufferSize(glfwWindow, &width, &height);
                 windowVisible = (width > 0 && height > 0);
@@ -889,12 +887,30 @@ void RunLoop()
             glfwSwapBuffers(glfwWindow);
         }
 
-        const double dashboardInterval = 1.0 / 90.0; // 90 fps for VR
+        const double dashboardInterval = 1.0 / 90.0;
+        const double minimizedMaxFps = 30.0;
+        const double minimizedInterval = 1.0 / minimizedMaxFps;
+        
         double waitEventsTimeout = std::max(CalCtx.wantedUpdateInterval, dashboardInterval);
         if (dashboardVisible && waitEventsTimeout > dashboardInterval)
             waitEventsTimeout = dashboardInterval;
 
-        glfwWaitEventsTimeout(waitEventsTimeout);
+        bool windowMinimized = glfwGetWindowAttrib(glfwWindow, GLFW_ICONIFIED);
+        if (windowMinimized) {
+            static double lastMinimizedFrameTime = 0.0;
+            double currentFrameTime = glfwGetTime();
+            double timeSinceLastFrame = currentFrameTime - lastMinimizedFrameTime;
+            
+            if (timeSinceLastFrame < minimizedInterval) {
+                double sleepTime = minimizedInterval - timeSinceLastFrame;
+                glfwWaitEventsTimeout(sleepTime);
+            } else {
+                glfwPollEvents();
+            }
+            lastMinimizedFrameTime = glfwGetTime();
+        } else {
+            glfwWaitEventsTimeout(waitEventsTimeout);
+        }
     }
     
 exit_loop:

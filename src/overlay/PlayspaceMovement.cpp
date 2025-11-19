@@ -90,11 +90,19 @@ bool PlayspaceMovement::Initialize()
 	std::filesystem::path exeDir = std::filesystem::path(exePath).parent_path();
 	std::string actionsPath = (exeDir / "actions.json").string();
 
-	vr::EVRInputError err = vr::VRInput()->SetActionManifestPath(actionsPath.c_str());
-	if (err != vr::VRInputError_None) {
-		LOG_ERROR(std::string("Failed to set action manifest path: ") + std::to_string(err));
+	if (!std::filesystem::exists(actionsPath)) {
+		LOG_WARNING("actions.json not found at: " + actionsPath + " - playspace movement bindings may not work");
+		LOG_WARNING("Make sure actions.json is installed in the same directory as the executable");
 		return false;
 	}
+
+	vr::EVRInputError err = vr::VRInput()->SetActionManifestPath(actionsPath.c_str());
+	if (err != vr::VRInputError_None) {
+		LOG_ERROR(std::string("Failed to set action manifest path: ") + std::to_string(err) + " (path: " + actionsPath + ")");
+		return false;
+	}
+	
+	LOG_DEBUG("Action manifest loaded from: " + actionsPath);
 
 	err = vr::VRInput()->GetActionSetHandle("/actions/playspace", &m_actionSet);
 	if (err != vr::VRInputError_None) {
