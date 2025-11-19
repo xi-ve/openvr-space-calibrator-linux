@@ -231,12 +231,11 @@ void VerifySetupCorrect() {
             
             LOG_INFO("Registering overlay manifest: " + manifestPath);
             
-            // If manifest is not installed, try installing it, and set it to auto-start with SteamVR
+            // If manifest is not installed, try installing it
             auto vrAppErr = vr::VRApplications()->AddApplicationManifest(manifestPath.c_str());
             if (vrAppErr != vr::VRApplicationError_None) {
                 LOG_ERROR(std::string("Failed to add manifest: ") + vr::VRApplications()->GetApplicationsErrorNameFromEnum(vrAppErr));
             } else {
-                vr::VRApplications()->SetApplicationAutoLaunch(OPENVR_APPLICATION_KEY, true);
                 LOG_INFO("Overlay manifest registered successfully");
             }
         } else {
@@ -244,13 +243,14 @@ void VerifySetupCorrect() {
         }
     } else {
         LOG_INFO("Space Calibrator overlay already registered with SteamVR");
-        // Ensure auto-launch is enabled even if already registered
-        auto autoLaunchErr = vr::VRApplications()->SetApplicationAutoLaunch(OPENVR_APPLICATION_KEY, true);
-        if (autoLaunchErr != vr::VRApplicationError_None) {
-            LOG_WARNING(std::string("Failed to set auto-launch: ") + vr::VRApplications()->GetApplicationsErrorNameFromEnum(autoLaunchErr));
-        } else {
-            LOG_INFO("Auto-launch enabled for overlay");
-        }
+    }
+    
+    // Always set auto-launch (like lighthouse manager does)
+    auto autoLaunchErr = vr::VRApplications()->SetApplicationAutoLaunch(OPENVR_APPLICATION_KEY, true);
+    if (autoLaunchErr != vr::VRApplicationError_None) {
+        LOG_WARNING(std::string("Failed to set auto-launch: ") + vr::VRApplications()->GetApplicationsErrorNameFromEnum(autoLaunchErr));
+    } else {
+        LOG_INFO("Auto-launch enabled for overlay");
     }
 }
 
