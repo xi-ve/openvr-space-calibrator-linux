@@ -38,6 +38,8 @@ The AUR package will automatically:
 
 After the first launch or manual enabling, the overlay will auto-launch with SteamVR on future starts.
 
+If the driver is not registered correctly under SteamVR you may run the following command to re-do the registration process: "openvr-space-calibrator-install".
+
 ### Building from Source
 
 If you prefer to build from source or are using a different distribution, see the [Building](#building) section below.
