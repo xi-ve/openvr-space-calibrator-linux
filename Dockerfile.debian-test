@@ -1,0 +1,91 @@
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    pkg-config \
+    libglfw3-dev \
+    libgl1-mesa-dev \
+    libx11-dev \
+    libxrandr-dev \
+    libxinerama-dev \
+    libxcursor-dev \
+    libxi-dev \
+    libeigen3-dev \
+    libimgui-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG TEST_SYSTEM_IMGUI=false
+
+RUN if [ "$TEST_SYSTEM_IMGUI" = "true" ]; then \
+        echo "[?] Setting up ImGui sources in system location for testing..."; \
+        mkdir -p /usr/share/imgui/backends; \
+        git clone --depth 1 https://github.com/ocornut/imgui.git /tmp/imgui; \
+        cp /tmp/imgui/*.cpp /tmp/imgui/*.h /usr/share/imgui/ 2>/dev/null || true; \
+        cp -r /tmp/imgui/backends/*.cpp /tmp/imgui/backends/*.h /usr/share/imgui/backends/ 2>/dev/null || true; \
+        rm -rf /tmp/imgui; \
+        echo "[+] ImGui sources installed to /usr/share/imgui/"; \
+    fi
+
+ARG INSTALL_OPENVR=false
+ARG OPENVR_VERSION=1.23.8
+
+RUN if [ "$INSTALL_OPENVR" = "true" ]; then \
+        echo "[?] Installing OpenVR SDK for testing..."; \
+        mkdir -p /tmp/openvr && cd /tmp/openvr && \
+        wget -q "https://github.com/ValveSoftware/openvr/archive/v${OPENVR_VERSION}.tar.gz" -O openvr.tar.gz || \
+        wget -q "https://github.com/ValveSoftware/openvr/archive/refs/tags/v${OPENVR_VERSION}.tar.gz" -O openvr.tar.gz || \
+        echo "Warning: Could not download OpenVR SDK. Build may fail without it."; \
+        if [ -f openvr.tar.gz ]; then \
+            tar -xzf openvr.tar.gz && \
+            mkdir -p /usr/include/openvr && \
+            cp -r openvr-*/headers/* /usr/include/openvr/ && \
+            mkdir -p /usr/lib && \
+            cp openvr-*/lib/linux64/libopenvr_api.so /usr/lib/ 2>/dev/null || true; \
+            rm -rf /tmp/openvr; \
+            echo "[+] OpenVR SDK installed"; \
+        fi; \
+    fi
+
+WORKDIR /workspace
+
+ARG GIT_REPO_URL
+ARG GIT_BRANCH=main
+
+RUN if [ -n "$GIT_REPO_URL" ]; then \
+        git clone --depth 1 --branch "${GIT_BRANCH}" "${GIT_REPO_URL}" /workspace/src || \
+        git clone --depth 1 "${GIT_REPO_URL}" /workspace/src; \
+    fi
+
+WORKDIR /workspace/src
+
+RUN REPO_ROOT=/workspace/src && \
+    if [ -d "LinuxEditionSpaceClibrator" ]; then \
+        REPO_ROOT=/workspace/src; \
+    fi && \
+    cd "$REPO_ROOT" && \
+    if [ "$TEST_SYSTEM_IMGUI" != "true" ]; then \
+        if [ -f ".gitmodules" ]; then \
+            git submodule update --init --recursive || true; \
+        fi; \
+    else \
+        echo "[?] Skipping ImGui submodule (testing system detection)"; \
+        if [ -f ".gitmodules" ]; then \
+            git submodule update --init --recursive || true; \
+            rm -rf WindowsEdition/OpenVR-SpaceCalibrator/lib/imgui lib/imgui 2>/dev/null || true; \
+        fi; \
+    fi
+
+WORKDIR /workspace/src
+
+RUN if [ -d "LinuxEditionSpaceClibrator" ]; then \
+        echo "Found LinuxEditionSpaceClibrator directory"; \
+    else \
+        echo "LinuxEditionSpaceClibrator not found, assuming flat structure"; \
+    fi
+
+CMD ["/bin/bash", "-c", "if [ -d /workspace/src/LinuxEditionSpaceClibrator ]; then cd /workspace/src/LinuxEditionSpaceClibrator; else cd /workspace/src; fi && ./scripts/build.sh"]

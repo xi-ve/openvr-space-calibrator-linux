@@ -25,7 +25,6 @@ add_subdirectory(src)
 find_path(OPENVR_INCLUDE_DIR openvr.h
     PATHS
         ${CMAKE_SOURCE_DIR}/../lib/openvr/headers
-        ${CMAKE_SOURCE_DIR}/../WindowsEdition/OpenVR-SpaceCalibrator/lib/openvr/headers
         $ENV{HOME}/.local/share/Steam/steamapps/common/SteamVR/headers
         $ENV{HOME}/.steam/steam/steamapps/common/SteamVR/headers
         $ENV{HOME}/.steam/root/steamapps/common/SteamVR/headers
