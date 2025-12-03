@@ -13,8 +13,8 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR" && pwd)"
 
-GIT_REPO_URL="${GIT_REPO_URL:-https://github.com/xi-ve/OpenVR-SpaceCalibrator.git}"
-GIT_BRANCH="${GIT_BRANCH:-main}"
+GIT_REPO_URL="${GIT_REPO_URL:-https://github.com/xi-ve/openvr-space-calibrator-linux.git}"
+GIT_BRANCH="${GIT_BRANCH:-cleanup-and-debian}"
 DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-space-calibrator-debian-test}"
 
 TEST_SYSTEM_IMGUI="${TEST_SYSTEM_IMGUI:-false}"
@@ -36,7 +36,7 @@ echo "[?] Running build test in container..."
 BUILD_DIR="${PROJECT_ROOT}/build"
 mkdir -p "${BUILD_DIR}"
 docker run --rm \
-    -v "${BUILD_DIR}:/workspace/src/LinuxEditionSpaceClibrator/build" \
+    -v "${BUILD_DIR}:/workspace/src/build" \
     "${DOCKER_IMAGE_NAME}"
 
 echo "[+] Build test complete!"

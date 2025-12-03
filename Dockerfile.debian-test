@@ -54,29 +54,32 @@ RUN if [ "$INSTALL_OPENVR" = "true" ]; then \
 WORKDIR /workspace
 
 ARG GIT_REPO_URL
-ARG GIT_BRANCH=main
+ARG GIT_BRANCH=cleanup-and-debian
 
 RUN if [ -n "$GIT_REPO_URL" ]; then \
-        git clone --depth 1 --branch "${GIT_BRANCH}" "${GIT_REPO_URL}" /workspace/src || \
-        git clone --depth 1 "${GIT_REPO_URL}" /workspace/src; \
+        echo "[?] Cloning repository from ${GIT_REPO_URL} (branch: ${GIT_BRANCH})..."; \
+        git clone --branch "${GIT_BRANCH}" "${GIT_REPO_URL}" /workspace/src || \
+        git clone "${GIT_REPO_URL}" /workspace/src; \
+        cd /workspace/src && \
+        git checkout "${GIT_BRANCH}" 2>/dev/null || true; \
     fi
 
 WORKDIR /workspace/src
 
-RUN REPO_ROOT=/workspace/src && \
-    if [ -d "LinuxEditionSpaceClibrator" ]; then \
-        REPO_ROOT=/workspace/src; \
-    fi && \
-    cd "$REPO_ROOT" && \
-    if [ "$TEST_SYSTEM_IMGUI" != "true" ]; then \
+RUN if [ "$TEST_SYSTEM_IMGUI" != "true" ]; then \
+        echo "[?] Initializing git submodules..."; \
         if [ -f ".gitmodules" ]; then \
-            git submodule update --init --recursive || true; \
+            git submodule update --init --recursive; \
+            echo "[+] Git submodules initialized"; \
+        else \
+            echo "[?] No .gitmodules file found"; \
         fi; \
     else \
         echo "[?] Skipping ImGui submodule (testing system detection)"; \
         if [ -f ".gitmodules" ]; then \
             git submodule update --init --recursive || true; \
-            rm -rf WindowsEdition/OpenVR-SpaceCalibrator/lib/imgui lib/imgui 2>/dev/null || true; \
+            rm -rf lib/imgui 2>/dev/null || true; \
+            echo "[+] Other submodules initialized, ImGui removed for system detection test"; \
         fi; \
     fi
 
@@ -88,4 +91,4 @@ RUN if [ -d "LinuxEditionSpaceClibrator" ]; then \
         echo "LinuxEditionSpaceClibrator not found, assuming flat structure"; \
     fi
 
-CMD ["/bin/bash", "-c", "if [ -d /workspace/src/LinuxEditionSpaceClibrator ]; then cd /workspace/src/LinuxEditionSpaceClibrator; else cd /workspace/src; fi && ./scripts/build.sh"]
+CMD ["/bin/bash", "-c", "cd /workspace/src && if [ -d LinuxEditionSpaceClibrator ]; then cd LinuxEditionSpaceClibrator; fi && if [ ! -f scripts/build.sh ]; then echo 'Error: scripts/build.sh not found in:' && pwd && ls -la && exit 1; fi && ./scripts/build.sh --no-clean"]
